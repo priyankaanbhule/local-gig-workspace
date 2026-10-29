@@ -51,10 +51,10 @@ try {
     $env:TEMP = $wrapperTemp
     $env:TMP = $wrapperTemp
     if ($maven) {
-        & $maven.Source -B "-Dmaven.test.skip=true" package
+        & $maven.Source -B "-Dmaven.test.skip=true" clean package
     }
     else {
-        & (Join-Path $projectRoot "mvnw.cmd") -B "-Dmaven.test.skip=true" package
+        & (Join-Path $projectRoot "mvnw.cmd") -B "-Dmaven.test.skip=true" clean package
     }
 }
 finally {
