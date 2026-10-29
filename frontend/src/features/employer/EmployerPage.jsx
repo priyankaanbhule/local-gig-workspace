@@ -24,9 +24,23 @@ export function EmployerPage({ listings, setListings, user, setMessage }) {
 
 function CompanyProfileEditor({ setMessage }) {
     const empty = { companyName: "", tagline: "", description: "", website: "", linkedinUrl: "", industry: "", headquarters: "", logoUrl: "", employeeCount: "" };
-    const [profile, setProfile] = useState(empty); const [verified, setVerified] = useState(false); const [error, setError] = useState("");
+    const [profile, setProfile] = useState(empty); const [verified, setVerified] = useState(false); const [error, setError] = useState(""); const [importing, setImporting] = useState(false);
     useEffect(() => { platformRequest("/companies/profile/me").then((value) => { setProfile(value); setVerified(value.verified); }).catch(() => {}); }, []);
     async function save(event) { event.preventDefault(); setError(""); try { const result = await platformRequest("/companies/profile/me", { method: "PUT", body: JSON.stringify(profile) }); setProfile(result); setVerified(result.verified); setMessage("Company profile saved."); } catch (e) { setError(e.message); } }
+    async function importFromWebsite() {
+        if (!profile.website?.trim()) { setError("Enter the company website first."); return; }
+        setImporting(true); setError("");
+        try {
+            const imported = await platformRequest("/companies/import", { method: "POST", body: JSON.stringify({ website: profile.website }) });
+            const fields = ["companyName", "tagline", "description", "website", "linkedinUrl", "industry", "headquarters", "logoUrl", "employeeCount"];
+            setProfile((current) => fields.reduce((next, field) => {
+                if (!next[field]?.trim() && imported[field]) next[field] = imported[field];
+                return next;
+            }, { ...current }));
+            setMessage("Imported public website details. Review them, then save the company profile.");
+        } catch (e) { setError(e.message); }
+        finally { setImporting(false); }
+    }
     return <form className="panel post-form" onSubmit={save}><h2>Company profile {verified && <span className="status-pill">Verified</span>}</h2>{error && <div className="notice error">{error}</div>}
         <label>Company name<input required maxLength="160" value={profile.companyName || ""} onChange={(e) => setProfile({ ...profile, companyName: e.target.value })} /></label>
         <label>Tagline<input maxLength="180" value={profile.tagline || ""} onChange={(e) => setProfile({ ...profile, tagline: e.target.value })} /></label>
@@ -34,6 +48,8 @@ function CompanyProfileEditor({ setMessage }) {
         <label>Headquarters<input maxLength="120" value={profile.headquarters || ""} onChange={(e) => setProfile({ ...profile, headquarters: e.target.value })} /></label>
         <label>Company size<input maxLength="50" placeholder="e.g. 11–50 employees" value={profile.employeeCount || ""} onChange={(e) => setProfile({ ...profile, employeeCount: e.target.value })} /></label>
         <label>Website<input type="url" maxLength="500" value={profile.website || ""} onChange={(e) => setProfile({ ...profile, website: e.target.value })} /></label>
+        <button type="button" className="button secondary" onClick={importFromWebsite} disabled={importing}>{importing ? "Importing…" : "Import details from website"}</button>
+        <small>Imports public page title, description, logo, and any LinkedIn company link it publishes. Review the fields before saving.</small>
         <label>LinkedIn company page<input type="url" maxLength="500" value={profile.linkedinUrl || ""} onChange={(e) => setProfile({ ...profile, linkedinUrl: e.target.value })} placeholder="https://www.linkedin.com/company/..." /></label>
         <label>Logo URL<input type="url" maxLength="500" value={profile.logoUrl || ""} onChange={(e) => setProfile({ ...profile, logoUrl: e.target.value })} /></label>
         <label>About the company<textarea maxLength="3000" rows="4" value={profile.description || ""} onChange={(e) => setProfile({ ...profile, description: e.target.value })} /></label>

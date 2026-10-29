@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -17,12 +18,23 @@ public class CompanyProfileController {
     private final CompanyProfileRepository profiles;
     private final CompanyVerificationRepository verifications;
     private final RoleGuard roleGuard;
+    private final CompanyWebsiteImportService websiteImportService;
 
     public CompanyProfileController(CompanyProfileRepository profiles,
-            CompanyVerificationRepository verifications, RoleGuard roleGuard) {
+            CompanyVerificationRepository verifications, RoleGuard roleGuard,
+            CompanyWebsiteImportService websiteImportService) {
         this.profiles = profiles;
         this.verifications = verifications;
         this.roleGuard = roleGuard;
+        this.websiteImportService = websiteImportService;
+    }
+
+    @PostMapping("/import")
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public CompanyWebsiteImportResponse importWebsite(@AuthenticationPrincipal User user,
+            @Valid @RequestBody CompanyWebsiteImportRequest request) {
+        requireEmployer(user);
+        return websiteImportService.importFrom(request.website());
     }
 
     @GetMapping("/profile/me")
