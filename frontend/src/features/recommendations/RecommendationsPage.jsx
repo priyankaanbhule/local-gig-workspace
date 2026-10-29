@@ -1,0 +1,9 @@
+import { useEffect, useState } from "react";
+import { platformRequest, mapOpportunity } from "../../api/platform.js";
+
+export default function RecommendationsPage({ onApply, savedIds, onSave, applications, proposals }) {
+    const [items, setItems] = useState([]);
+    const [error, setError] = useState("");
+    useEffect(() => { platformRequest("/opportunities/recommended").then(setItems).catch((e) => setError(e.message)); }, []);
+    return <><div className="page-heading"><p className="eyebrow">MATCHED FOR YOU</p><h1>Recommended opportunities</h1><p className="muted">A rule-based profile match using your skills, preferred roles, and location.</p></div>{error && <div className="notice error">{error}</div>}<div className="listing-list">{items.map((entry) => { const item = mapOpportunity(entry.opportunity); return <article className="listing-card" key={item.id}><div className="listing-card-main"><div className="section-title"><span className="eyebrow">{entry.matchPercent}% profile match</span><span className="status-pill">{item.kind}</span></div><h3>{item.title}</h3><p>{item.company} · {item.location} · {item.budget}</p><p>{entry.explanation}</p>{entry.matchedSkills?.length > 0 && <p><strong>Matching skills:</strong> {entry.matchedSkills.join(", ")}</p>}{entry.missingSkills?.length > 0 && <p><strong>Skills to develop:</strong> {entry.missingSkills.join(", ")}</p>}<div className="listing-actions"><button className="button primary" disabled={applications.some((a) => a.listingId === item.id) || proposals.some((p) => p.opportunityId === item.id)} onClick={() => onApply(item)}>Apply / propose</button><button className="button secondary" onClick={() => onSave(item.id)}>{savedIds.includes(item.id) ? "Saved" : "Save"}</button></div></div></article>; })}{!items.length && !error && <div className="empty-state"><span>✦</span><p>Add skills and preferences to your profile to get useful matches.</p></div>}</div></>;
+}

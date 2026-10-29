@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: localgig-demo
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: localgig-db
+          property: connectionString
+      - key: LOCALGIG_DB_USERNAME
+        fromDatabase:
+          name: localgig-db
+          property: user
+      - key: LOCALGIG_DB_PASSWORD
+        fromDatabase:
+          name: localgig-db
+          property: password
+      - key: LOCALGIG_DDL_AUTO
+        value: update
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: LOCALGIG_DEMO_DATA_ENABLED
+        value: "true"
+      - key: LOCALGIG_UPLOAD_DIR
+        value: /var/data/uploads
+      - key: LOCALGIG_COOKIE_SECURE
+        value: "true"
+
+databases:
+  - name: localgig-db
+    plan: free
+    databaseName: localgig
+    user: localgig
