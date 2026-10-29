@@ -5,6 +5,9 @@ uploads/
 !.env.example
 application-local.properties
 target/
+frontend/node_modules/
+frontend/dist/
+/src/main/resources/static/*
 backend/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
