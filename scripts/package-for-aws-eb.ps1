@@ -27,11 +27,25 @@ else {
 Copy-Item -Path (Join-Path $frontendRoot "dist\*") -Destination $staticRoot -Recurse -Force
 
 $maven = Get-Command mvn -ErrorAction SilentlyContinue
+$jdkDirectory = Join-Path $env:ProgramFiles "Eclipse Adoptium"
+$java21Home = Get-ChildItem -LiteralPath $jdkDirectory -Directory -Filter "jdk-21*" -ErrorAction SilentlyContinue |
+    Where-Object { Test-Path (Join-Path $_.FullName "bin\javac.exe") } |
+    Sort-Object Name -Descending |
+    Select-Object -First 1 -ExpandProperty FullName
+if (-not $java21Home) {
+    throw "JDK 21 was not found under $jdkDirectory. Install JDK 21 or update this script's java21Home selection."
+}
+
+$originalJavaHome = $env:JAVA_HOME
+$originalPath = $env:Path
 $originalTemp = $env:TEMP
 $originalTmp = $env:TMP
 $wrapperTemp = Join-Path $projectRoot "build\maven-wrapper-tmp"
 New-Item -ItemType Directory -Path $wrapperTemp -Force | Out-Null
 try {
+    # Maven uses JAVA_HOME, which may differ from the java.exe first on PATH.
+    $env:JAVA_HOME = $java21Home
+    $env:Path = "$(Join-Path $java21Home 'bin');$originalPath"
     # Keep wrapper extraction under the project so Windows sandbox/temp ACLs
     # cannot prevent Maven from preparing its downloaded distribution.
     $env:TEMP = $wrapperTemp
@@ -44,6 +58,8 @@ try {
     }
 }
 finally {
+    $env:JAVA_HOME = $originalJavaHome
+    $env:Path = $originalPath
     $env:TEMP = $originalTemp
     $env:TMP = $originalTmp
 }
