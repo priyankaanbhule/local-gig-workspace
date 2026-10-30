@@ -119,8 +119,8 @@ public class ProposalController {
     }
 
     private void requireFreelancer(User user) {
-        if (user == null || user.getRole() != UserRole.FREELANCER) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Freelancer access required");
+        if (user == null || (user.getRole() != UserRole.FREELANCER && user.getRole() != UserRole.JOB_SEEKER)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Job seeker access required");
         }
     }
 

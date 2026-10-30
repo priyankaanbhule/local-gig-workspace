@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { uploadAuthenticatedFile, fileHref } from "../../api/platform.js";
+import { authRequest } from "../../api/auth.js";
 import { PageHeading, EmptyState } from "../../components/WorkspaceUI.jsx";
 const PROFILE_API = "/api/profiles/me";
 

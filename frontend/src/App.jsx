@@ -13,7 +13,7 @@ import { MessagesPage } from "./features/messages/MessagesPage.jsx";
 import { NotificationsPage } from "./features/notifications/NotificationsPage.jsx";
 import { ReviewsPage } from "./features/reviews/ReviewsPage.jsx";
 import { ProposalsPage, ProjectsPage } from "./features/projects/ProjectPages.jsx";
-import { EmployerPage } from "./features/employer/EmployerPage.jsx";
+import { EmployerApplicationsPage, EmployerOverview, EmployerPage } from "./features/employer/EmployerPage.jsx";
 import { ModerationPage } from "./features/admin/ModerationPage.jsx";
 import { PaymentsPage } from "./features/payments/PaymentsPage.jsx";
 
@@ -224,7 +224,6 @@ function AuthScreen() {
                             <label htmlFor="role">I’m joining as</label>
                             <select id="role" name="role" defaultValue="JOB_SEEKER">
                                 <option value="JOB_SEEKER">Job seeker</option>
-                                <option value="FREELANCER">Freelancer</option>
                                 <option value="EMPLOYER">Employer / recruiter</option>
                             </select>
                         </>
@@ -259,6 +258,7 @@ function AuthScreen() {
 function Workspace({ user, onLogout }) {
     const [page, setPage] = useState("Overview");
     const [unreadCount, setUnreadCount] = useState(0);
+    const [directRecipient, setDirectRecipient] = useState(null);
     const [query, setQuery] = useState("");
     const [queryDraft, setQueryDraft] = useState("");
     const [location, setLocation] = useState("");
@@ -295,7 +295,6 @@ function Workspace({ user, onLogout }) {
 
     useEffect(() => {
         platformRequest("/profiles/me").then(setProfile).catch(() => {});
-        platformRequest("/notifications").then((items) => setUnreadCount(items.filter((item) => !item.read).length)).catch(() => {});
         platformRequest("/saved")
             .then((items) => { const mapped = items.map(mapOpportunity); setSavedListings(mapped); setSavedIds(mapped.map((item) => item.id)); })
             .catch(() => {});
@@ -309,9 +308,19 @@ function Workspace({ user, onLogout }) {
                 createdAt: item.createdAt,
             }))))
             .catch(() => {});
-        if (String(user.role).toUpperCase() === "FREELANCER") {
+        if (["JOB_SEEKER", "FREELANCER"].includes(String(user.role).toUpperCase())) {
             platformRequest("/proposals/me").then(setProposals).catch(() => {});
         }
+    }, []);
+
+    useEffect(() => {
+        let alive = true;
+        const refreshUnread = () => platformRequest("/notifications")
+            .then((items) => { if (alive) setUnreadCount(items.filter((item) => !item.read).length); })
+            .catch(() => {});
+        refreshUnread();
+        const timer = window.setInterval(refreshUnread, 15000);
+        return () => { alive = false; window.clearInterval(timer); };
     }, []);
 
     useEffect(() => {
@@ -497,8 +506,9 @@ function Workspace({ user, onLogout }) {
         }
     }
 
-    const role = String(user.role || "JOB_SEEKER").toUpperCase();
-    const nav = [
+    const storedRole = String(user.role || "JOB_SEEKER").toUpperCase();
+    const role = storedRole === "FREELANCER" ? "JOB_SEEKER" : storedRole;
+    const seekerNav = [
         ["Overview", "⌂"],
         ["Find work", "⌕"],
         ["Recommended", "✦"],
@@ -509,21 +519,21 @@ function Workspace({ user, onLogout }) {
         ["Job alerts", "♧"],
         ["My profile", "◉"],
         ["Account settings", "⚙"],
-        ["Find candidates", "♙"],
         ["Messages", "✉"],
         ["Notifications", "♧"],
         ["Reviews", "★"],
-        ["Employer tools", "▣"],
-        ["Admin moderation", "⚑"],
-        ["Reports & payments", "₹"],
         ["Help", "?"],
-    ].filter(([name]) =>
-        !["Employer tools"].includes(name) || ["EMPLOYER", "ADMIN"].includes(role)
-    ).filter(([name]) => name !== "Admin moderation" || role === "ADMIN")
-        .filter(([name]) => name !== "Find candidates" || ["EMPLOYER", "ADMIN"].includes(role))
+    ];
+    const recruiterNav = [
+        ["Overview", "⌂"], ["Review applications", "✓"], ["Employer tools", "▣"], ["Find candidates", "♙"],
+        ["Messages", "✉"], ["Notifications", "♧"], ["Reviews", "★"],
+        ["My profile", "◉"], ["Account settings", "⚙"], ["Help", "?"],
+    ];
+    const nav = (role === "EMPLOYER" ? recruiterNav : seekerNav)
         .filter(([name]) => name !== "Recommended" || ["JOB_SEEKER", "FREELANCER", "ADMIN"].includes(role))
-        .filter(([name]) => name !== "My proposals" || role === "FREELANCER")
-        .filter(([name]) => name !== "My projects" || ["FREELANCER", "EMPLOYER", "ADMIN"].includes(role));
+        .filter(([name]) => name !== "My proposals" || ["JOB_SEEKER", "FREELANCER", "ADMIN"].includes(role))
+        .filter(([name]) => name !== "My projects" || ["JOB_SEEKER", "FREELANCER", "EMPLOYER", "ADMIN"].includes(role));
+    if (role === "ADMIN") nav.push(["Find candidates", "♙"], ["Employer tools", "▣"], ["Admin moderation", "⚑"], ["Reports & payments", "₹"]);
 
     return (
         <div className="app-shell">
@@ -551,7 +561,7 @@ function Workspace({ user, onLogout }) {
                     <div className="avatar">{(user.fullName || "U").slice(0, 1).toUpperCase()}</div>
                     <div className="sidebar-user-copy">
                         <strong>{user.fullName}</strong>
-                        <span>{String(user.role || "JOB_SEEKER").replaceAll("_", " ")}</span>
+                        <span>{role.replaceAll("_", " ")}</span>
                     </div>
                     <button className="icon-button" title="Sign out" onClick={onLogout}>↪</button>
                 </div>
@@ -579,7 +589,8 @@ function Workspace({ user, onLogout }) {
                         </div>
                     )}
 
-                    {page === "Overview" && (
+                    {page === "Overview" && role === "EMPLOYER" && <EmployerOverview user={user} onNavigate={setPage} setMessage={setMessage} />}
+                    {page === "Overview" && role !== "EMPLOYER" && (
                         <Overview
                             user={user}
                             listings={filteredListings}
@@ -680,7 +691,7 @@ function Workspace({ user, onLogout }) {
                     )}
 
                     {page === "Job alerts" && <JobAlertsPage />}
-                    {page === "Find candidates" && <CandidateSearchPage />}
+                    {page === "Find candidates" && <CandidateSearchPage onMessage={(person) => { setDirectRecipient({ userId: person.userId, fullName: person.fullName }); setPage("Messages"); }} />}
                     {page === "Recommended" && <RecommendationsPage onApply={applyToListing} savedIds={savedIds} onSave={toggleSaved} applications={applications} proposals={proposals} />}
                     {page === "Help" && <HelpPage />}
 
@@ -689,12 +700,13 @@ function Workspace({ user, onLogout }) {
                     )}
                     {page === "Account settings" && <AccountSettings onLogout={onLogout} />}
 
-                    {page === "Messages" && <MessagesPage user={user} />}
-                    {page === "Notifications" && <NotificationsPage onUnreadChange={setUnreadCount} />}
+                    {page === "Messages" && <MessagesPage user={user} directRecipient={directRecipient} onDirectRecipientHandled={() => setDirectRecipient(null)} />}
+                    {page === "Notifications" && <NotificationsPage user={user} onUnreadChange={setUnreadCount} onNavigate={setPage} />}
                     {page === "Reviews" && <ReviewsPage user={user} />}
                     {page === "Employer tools" && (
                         <EmployerPage listings={listings} setListings={setListings} user={user} setMessage={setMessage} />
                     )}
+                    {page === "Review applications" && <EmployerApplicationsPage setMessage={setMessage} onMessage={(application) => { setDirectRecipient({ userId: application.applicantId, fullName: application.applicantName }); setPage("Messages"); }} />}
                     {page === "Admin moderation" && <ModerationPage />}
                     {page === "Reports & payments" && <PaymentsPage user={user} />}
                 </section>

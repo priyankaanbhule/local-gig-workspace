@@ -4,6 +4,8 @@ import com.localgig.opportunity.Opportunity;
 import com.localgig.opportunity.OpportunityRepository;
 import com.localgig.notification.Notification;
 import com.localgig.notification.NotificationRepository;
+import com.localgig.message.Message;
+import com.localgig.message.MessageRepository;
 import com.localgig.user.User;
 import com.localgig.user.UserRole;
 import jakarta.validation.Valid;
@@ -22,12 +24,14 @@ public class ApplicationController {
     private final ApplicationRepository applications;
     private final OpportunityRepository opportunities;
     private final NotificationRepository notifications;
+    private final MessageRepository messages;
 
     public ApplicationController(ApplicationRepository applications, OpportunityRepository opportunities,
-                                 NotificationRepository notifications) {
+                                 NotificationRepository notifications, MessageRepository messages) {
         this.applications = applications;
         this.opportunities = opportunities;
         this.notifications = notifications;
+        this.messages = messages;
     }
 
     @PostMapping("/opportunities/{opportunityId}/applications")
@@ -81,10 +85,24 @@ public class ApplicationController {
         if (request.status() == ApplicationStatus.WITHDRAWN) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Candidates withdraw their own applications");
         }
+        ApplicationStatus previousStatus = application.getStatus();
         application.setStatus(request.status());
-        notifications.save(new Notification(application.getApplicant(), "Application updated",
-                "Your application for " + application.getOpportunity().getTitle() + " is "
-                        + request.status().name().toLowerCase().replace('_', ' ') + ".", "APPLICATION"));
+        if (previousStatus != request.status()) {
+            String title = application.getOpportunity().getTitle();
+            String statusText = request.status().name().toLowerCase().replace('_', ' ');
+            String notificationTitle = request.status() == ApplicationStatus.SELECTED ? "Application accepted"
+                    : request.status() == ApplicationStatus.REJECTED ? "Application update" : "Application updated";
+            String body = "Your application for " + title + " is " + statusText + ".";
+            notifications.save(new Notification(application.getApplicant(), notificationTitle, body, "APPLICATION"));
+            if (request.status() == ApplicationStatus.SELECTED || request.status() == ApplicationStatus.REJECTED) {
+                String messageBody = request.status() == ApplicationStatus.SELECTED
+                        ? "Good news! Your application for " + title + " has been accepted. Please reply here so we can discuss next steps."
+                        : "Thank you for applying for " + title + ". We’re unable to move forward with your application this time. You’re welcome to message us if you have a question.";
+                messages.save(new Message(application, user, messageBody));
+                notifications.save(new Notification(application.getApplicant(), "New recruiter message",
+                        "The recruiter sent you a message about " + title + ".", "MESSAGE"));
+            }
+        }
         return ApplicationResponse.from(application);
     }
 

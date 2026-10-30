@@ -32,9 +32,6 @@ public class SampleOpportunityInitializer implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        // Never mix demo listings into a database that already contains user-created listings.
-        if (opportunities.count() > 0) return;
-
         User employer = users.findByEmailIgnoreCase("sample-employer@localgig.local").orElseGet(() -> {
             User sample = new User("LocalGig Sample Employer", "sample-employer@localgig.local",
                     passwordEncoder.encode(UUID.randomUUID().toString()), UserRole.EMPLOYER);
@@ -43,7 +40,7 @@ public class SampleOpportunityInitializer implements ApplicationRunner {
         });
 
         LocalDate today = LocalDate.now();
-        opportunities.saveAll(List.of(
+        List<Opportunity> showcaseListings = List.of(
                 listing(employer, "Junior Java Developer", "Sample: NovaTech Solutions", "Pune, Maharashtra",
                         "Software Development", "JOB", "Full-time", "₹4–6 LPA",
                         "Work on Java and Spring Boot features with an experienced product team. Open to recent graduates.",
@@ -68,7 +65,11 @@ public class SampleOpportunityInitializer implements ApplicationRunner {
                         "Operations", "GIG", "Freelance", "₹3,000–5,000 fixed-price",
                         "Clean and organize a spreadsheet, check entries for duplicates, and return a short completion summary.",
                         List.of("Excel", "Google Sheets", "Data Entry", "Attention to Detail"), today.plusDays(14), 0, null, null)
-        ));
+        );
+        // Seed each presentation listing once, even when the database already has user-created jobs.
+        opportunities.saveAll(showcaseListings.stream()
+                .filter(listing -> !opportunities.existsByTitleIgnoreCase(listing.getTitle()))
+                .toList());
     }
 
     private Opportunity listing(User employer, String title, String company, String location, String category,

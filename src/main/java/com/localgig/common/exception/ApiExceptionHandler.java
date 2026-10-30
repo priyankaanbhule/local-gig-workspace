@@ -11,6 +11,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.server.ResponseStatusException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -19,6 +21,7 @@ import java.util.Map;
 /** Converts common API failures into useful, consistent JSON responses. */
 @RestControllerAdvice
 public class ApiExceptionHandler {
+    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ApiErrorResponse> handleStatus(ResponseStatusException exception,
@@ -56,6 +59,12 @@ public class ApiExceptionHandler {
     public ResponseEntity<ApiErrorResponse> handleConflict(DataIntegrityViolationException exception,
                                                             HttpServletRequest request) {
         return response(HttpStatus.CONFLICT, "This action conflicts with existing account or listing data.", request, Map.of());
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiErrorResponse> handleUnexpected(Exception exception, HttpServletRequest request) {
+        log.error("Unhandled API error for {} {}", request.getMethod(), request.getRequestURI(), exception);
+        return response(HttpStatus.INTERNAL_SERVER_ERROR, "The request could not be completed.", request, Map.of());
     }
 
     private ResponseEntity<ApiErrorResponse> response(HttpStatus status, String message,

@@ -41,11 +41,12 @@ public class AuthService {
             );
         }
 
+        UserRole role = request.role() == UserRole.FREELANCER ? UserRole.JOB_SEEKER : request.role();
         User user = new User(
                 request.fullName().trim(),
                 email,
                 passwordEncoder.encode(request.password()),
-                request.role()
+                role
         );
 
         // Email verification is not part of this prototype's sign-up flow.

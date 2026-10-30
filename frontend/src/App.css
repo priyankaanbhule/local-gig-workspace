@@ -164,6 +164,8 @@ input:focus, select:focus, textarea:focus { border-color: #359575; box-shadow: 0
 .light-button { flex: 0 0 auto; color: #164a38; background: #e0f0d0; }
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 22px 0 34px; }
 .stat-card { display: grid; gap: 9px; padding: 18px; border: 1px solid #e7ece7; border-radius: 12px; background: #fff; }
+.stat-card-action { width: 100%; text-align: left; color: inherit; font: inherit; cursor: pointer; transition: border-color .16s ease, transform .16s ease; }
+.stat-card-action:hover, .stat-card-action:focus-visible { border-color: #84b69b; transform: translateY(-1px); outline: none; }
 .stat-icon { color: #268261; font-size: 19px; }
 .stat-card .muted { font-size: 11px; }
 .stat-card strong { font: 700 23px "Manrope", sans-serif; }
@@ -300,6 +302,9 @@ input:focus, select:focus, textarea:focus { border-color: #359575; box-shadow: 0
 @media print { body * { visibility: hidden; } .certificate-card, .certificate-card * { visibility: visible; } .certificate-card { position: fixed; inset: 0; width: 100%; border: 8px double #caa86b; } .certificate-card .dialog-actions { display: none; } }
 .message-thread { display: flex; min-height: 220px; flex-direction: column; align-items: flex-start; gap: 10px; margin: 16px 0; padding: 16px; border-radius: 10px; background: #f6f8f6; }
 .message-bubble { max-width: 75%; margin: 0; padding: 10px 13px; border-radius: 10px; background: white; font-size: 13px; line-height: 1.5; }
+.message-line { display: flex; align-items: center; gap: 8px; max-width: 100%; }
+.message-line.mine { align-self: flex-end; }
+.message-line .message-bubble { align-self: auto; }
 .message-bubble strong { font-size: 11px; color: #287e60; }
 .message-bubble.mine { align-self: flex-end; background: #e7f3e9; }
 .message-compose { display: flex; gap: 10px; }
@@ -314,6 +319,27 @@ input:focus, select:focus, textarea:focus { border-color: #359575; box-shadow: 0
 .danger-zone { margin-top: 18px; border-color: #efdddd; }
 .danger-zone p { color: #7a6c6c; font-size: 13px; }
 .applicant-row { padding-left: 20px; background: #fafbfa; }
+.application-review-card { padding: 18px 4px; border-bottom: 1px solid #edf0ed; }
+.application-review-card:last-of-type { border-bottom: 0; }
+.application-review-card .section-title { align-items: flex-start; margin: 0 0 10px; }
+.application-review-card .section-title h2 { margin: 0; }
+.application-review-card > p { color: #66756c; font-size: 13px; line-height: 1.6; }
+.application-resume-row { display: flex; align-items: center; gap: 10px; margin: 10px 0; }
+.application-review-card .candidate-actions { margin-top: 12px; }
+.employer-welcome { background: radial-gradient(circle at 88% 15%, #69a883, transparent 32%), #174c3c; }
+.recruiter-shortcuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 22px 0 28px; }
+.recruiter-shortcut { display: grid; gap: 8px; min-height: 145px; text-align: left; cursor: pointer; transition: transform .15s ease, box-shadow .15s ease; }
+.recruiter-shortcut:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgb(25 70 49 / 10%); }
+.recruiter-shortcut > span { color: #27815f; font-size: 22px; }
+.recruiter-shortcut strong { color: #203c2e; }
+.recruiter-shortcut small { color: #718076; line-height: 1.5; }
+.recruiter-shortcut b { color: #27815f; font-size: 12px; }
+.messages-workspace { display: grid; gap: 16px; }
+.message-thread { display: flex; flex-direction: column; gap: 10px; min-height: 180px; max-height: 52vh; overflow-y: auto; padding: 14px; border: 1px solid #e8eee9; border-radius: 12px; background: #f8faf8; }
+.message-bubble small { display: block; margin-top: 6px; color: #77837b; font-size: 10px; }
+.sample-review-panel { border-style: dashed; }
+.sample-review-panel .muted { font-size: 13px; }
+@media (max-width: 700px) { .recruiter-shortcuts { grid-template-columns: 1fr; } }
 @media (max-width: 700px) { .dashboard-columns { grid-template-columns: 1fr; } .post-form { grid-template-columns: 1fr; } .post-form h2, .post-form .notice { grid-column: auto; } .pagination { gap: 8px; } .application-dialog { padding: 24px 18px; } .dialog-actions { flex-direction: column-reverse; } .dialog-actions .button { width: 100%; } .project-update { grid-template-columns: 1fr; } .project-update label, .project-update .button { grid-column: auto; } }
 
 /* Responsive layout */

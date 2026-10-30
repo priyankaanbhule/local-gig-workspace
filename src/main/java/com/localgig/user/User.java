@@ -58,6 +58,10 @@ public class User implements UserDetails {
         return fullName;
     }
 
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
+
     public String getEmail() {
         return email;
     }

@@ -7,7 +7,7 @@ export async function platformRequest(path, options = {}) {
     });
     if (response.status === 204) return null;
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || data.message || "Request failed.");
+    if (!response.ok) throw new Error(data.detail || data.message || `Request failed (HTTP ${response.status}).`);
     return data;
 }
 

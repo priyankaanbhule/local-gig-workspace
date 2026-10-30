@@ -13,6 +13,7 @@ public interface OpportunityRepository extends JpaRepository<Opportunity, Long> 
     List<Opportunity> findAllByStatusOrderByCreatedAtDesc(String status);
     List<Opportunity> findAllByEmployerIdOrderByCreatedAtDesc(Long employerId);
     Optional<Opportunity> findByIdAndStatus(Long id, String status);
+    boolean existsByTitleIgnoreCase(String title);
     long countByStatus(String status);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)

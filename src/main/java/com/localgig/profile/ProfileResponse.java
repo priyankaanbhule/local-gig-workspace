@@ -26,7 +26,8 @@ public record ProfileResponse(
         String portfolioUrl,
         String resumeUrl,
         String profilePictureUrl,
-        boolean available
+        boolean available,
+        boolean sampleProfile
 ) {
     public static ProfileResponse emptyFor(User user) {
         return new ProfileResponse(
@@ -50,7 +51,8 @@ public record ProfileResponse(
                 null,
                 null,
                 null,
-                true
+                true,
+                false
         );
     }
 
@@ -78,7 +80,8 @@ public record ProfileResponse(
                 profile.getPortfolioUrl(),
                 profile.getResumeUrl(),
                 profile.getProfilePictureUrl(),
-                profile.isAvailable()
+                profile.isAvailable(),
+                user.getEmail().endsWith("@localgig.local")
         );
     }
 }

@@ -12,8 +12,11 @@ export function PageHeading({ eyebrow, title, copy }) {
     );
 }
 
-export function Stat({ label, value, icon }) {
-    return <div className="stat-card"><span className="stat-icon">{icon}</span><span className="muted">{label}</span><strong>{value}</strong></div>;
+export function Stat({ label, value, icon, onClick }) {
+    const content = <><span className="stat-icon">{icon}</span><span className="muted">{label}</span><strong>{value}</strong></>;
+    return onClick
+        ? <button type="button" className="stat-card stat-card-action" onClick={onClick}>{content}</button>
+        : <div className="stat-card">{content}</div>;
 }
 
 export function ListingCard({ item, saved, applied, onSave, onApply }) {
